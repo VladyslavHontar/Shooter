@@ -8,7 +8,6 @@ import java.awt.event.KeyListener;
 
 public class KeyboardInput implements KeyListener {
   private GPanel panel;
-  private JFrame frame;
   public KeyboardInput(GPanel panel) {
     this.panel = panel;
   }
@@ -28,6 +27,9 @@ public class KeyboardInput implements KeyListener {
         break;
       case KeyEvent.VK_A:
         panel.move(-5, 0);
+        break;
+      case KeyEvent.VK_D:
+        panel.move(5, 0);
         break;
     }
   }
