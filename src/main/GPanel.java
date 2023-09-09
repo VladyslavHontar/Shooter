@@ -16,6 +16,9 @@ public class GPanel extends JPanel {
   private int CxDelta = 0;
   private int CyDelta = 0;
   private BufferedImage img;
+  private BufferedImage crosshair;
+  private BufferedImage[][] animations;
+  private int animationTick, animationIndex;
   public GPanel() {
     addKeyListener(new KeyboardInput(this));
     addMouseMotionListener(new MouseInput(this));
@@ -25,13 +28,37 @@ public class GPanel extends JPanel {
             "invisibleCursor"
     ));
     importImg();
+    loadAnimations();
   }
 
+  private void loadAnimations() {
+    animations = new BufferedImage[3][12];
+    for (int i = 0; i < animations.length; i++) {
+      for (int j = 0; j < animations[i].length; j++) {
+        animations[i][j] = img.getSubimage(i * 64, j * 64, 64, 64);
+      }
+    }
+  }
+
+  public void setPanelSize(int width, int height) {
+    setPreferredSize(new Dimension(width, height));
+    setMinimumSize(new Dimension(width, height));
+    setMaximumSize(new Dimension(width, height));
+  }
   private void importImg() {
-    try (InputStream is = getClass().getResourceAsStream("/Character.png")) {
+    InputStream is = getClass().getResourceAsStream("/Character-Sheet.png");
+    InputStream is2 = getClass().getResourceAsStream("/crosshair.png");
+    try {
       img = ImageIO.read(is);
+      crosshair = ImageIO.read(is2);
     } catch (IOException e) {
       throw new RuntimeException(e);
+    } finally {
+      try {
+        is.close();
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 
@@ -55,11 +82,11 @@ public class GPanel extends JPanel {
     double angle = Math.atan2(CyDelta - centerY, CxDelta - centerX) + Math.toRadians(90);
 
     // Calculate the scale factor to make the image 3 times bigger
-    double scaleFactor = 2.2;
+    double scaleFactor = 1.5;
 
     // Calculate the new width and height of the scaled image
-    int newWidth = (int) (img.getWidth() * scaleFactor);
-    int newHeight = (int) (img.getHeight() * scaleFactor);
+    int newWidth = (int) (64 * scaleFactor);
+    int newHeight = (int) (64 * scaleFactor);
 
     // Calculate the position to draw the scaled image so that it's centered
     int drawX = centerX - (newWidth / 2);
@@ -69,16 +96,26 @@ public class GPanel extends JPanel {
     Graphics2D g2d = (Graphics2D) g.create();
     g2d.rotate(angle, centerX, centerY);
 
+    updateAnimationTick();
+
     // Draw the scaled and rotated image
-    g2d.drawImage(img, drawX, drawY, newWidth, newHeight, null);
+    g2d.drawImage(animations[0][animationIndex], drawX, drawY, newWidth, newHeight, null);
 
     // Draw a small rectangle at the mouse position
     g2d.setColor(Color.RED);
-    g.fillRect(CxDelta + 5, CyDelta, 5, 3);
-    g.fillRect(CxDelta - 7, CyDelta, 5, 3);
-    g.fillRect(CxDelta, CyDelta + 5, 3, 5);
-    g.fillRect(CxDelta, CyDelta - 7, 3, 5);
+    g.drawImage(crosshair, CxDelta - 5, CyDelta - 5, crosshair.getWidth() * 2, crosshair.getHeight() * 2, null);
 
     g2d.dispose();
+  }
+
+  private void updateAnimationTick() {
+    animationTick++;
+    if (animationTick >= 25) {
+      animationTick = 0;
+      animationIndex++;
+      if (animationIndex >= 12) {
+        animationIndex = 0;
+      }
+    }
   }
 }
